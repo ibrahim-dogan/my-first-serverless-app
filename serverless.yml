@@ -1,4 +1,4 @@
-service: my-first-serverless-app
+service: my-first-api
 app: my-first-serverless-app
 
 provider:
