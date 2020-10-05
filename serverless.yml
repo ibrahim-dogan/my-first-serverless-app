@@ -1,0 +1,50 @@
+service: my-first-serverless-app
+app: my-first-serverless-app
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  profile: default
+  stage: prod
+  region: us-east-1
+  timeout: 30
+
+functions:
+  createCandidate:
+    handler: api/candidate/handler.create
+    memorySize: 128
+    description: Add a new candidate.
+    events:
+      - http:
+          path: candidate
+          method: post
+
+  readCandidate:
+    handler: api/candidate/handler.read
+    memorySize: 128
+    description: Gathers a candidates information.
+    events:
+      - http:
+          path: candidate/{pk}
+          method: get
+
+  updateCandidate:
+    handler: api/candidate/handler.update
+    memorySize: 128
+    description: Updates candidates information.
+    events:
+      - http:
+          path: candidate/{pk}
+          method: patch
+
+  deleteCandidate:
+    handler: api/candidate/handler.delete
+    memorySize: 128
+    description: Deletes a candidate.
+    events:
+      - http:
+          path: candidate/{pk}
+          method: delete
+
+resources:
+  - ${file(resources/dynamo-table.yml)}
