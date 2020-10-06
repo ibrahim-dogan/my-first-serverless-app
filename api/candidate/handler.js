@@ -11,15 +11,14 @@ module.exports.create = async (event) => {
     try {
         const body = JSON.parse(event.body);
         const newCandidate = {
-            "pk": uuid.v1(),
-            "organisationId": body.organisationId,
-            "jobId": body.jobId,
+            "pk": body.pk,
+            "sk": body.sk,
             "firstName": body.firstName,
             "lastName": body.lastName,
             "email": body.email,
             "phone": body.phone,
-            "createdAt": Date.now(),
-            "updatedAt": Date.now(),
+            "createdAt": new Date().toString(),
+            "updatedAt": new Date().toString(),
         };
 
         let params = {
@@ -44,12 +43,13 @@ module.exports.create = async (event) => {
 
 // Gathers a candidates information.
 module.exports.read = async (event) => {
-    const {pk} = event.pathParameters;
+    const {organisationId, jobId, email} = event.pathParameters;
 
     let params = {
         TableName: TABLE_NAME,
         Key: {
-            "pk": pk,
+            "pk": `organisation#${organisationId}`,
+            "sk": `apply#${jobId},email#${email}`
         }
     }
 
@@ -70,32 +70,24 @@ module.exports.read = async (event) => {
 
 // Function to update an Item in DB
 module.exports.update = async (event) => {
-    const {pk} = event.pathParameters;
-    const body = JSON.parse(event.body);
+    const {organisationId, jobId, email} = event.pathParameters;
+    const candidate = JSON.parse(event.body);
+    candidate.updatedAt = new Date().toString();
 
-    const candidate = {
-        // "organisationId": body.organisationId,
-        // "jobId": body.jobId,
-        "firstName": body.firstName,
-        "lastName": body.lastName,
-        "email": body.email,
-        "phone": body.phone,
-        "updatedAt": Date.now(),
-    };
-
+    var updatedKeys = Object.keys(candidate);
+    var updateExpression = "set "+ updatedKeys.map(x => `${x} = :${x}`).join(" ");
+    var expressionAttributeValues = {};
+    updatedKeys.forEach((key)=>{
+        expressionAttributeValues[`:${key}`] = candidate[key]
+    })
     let params = {
         TableName: TABLE_NAME,
         Key: {
-            "pk": pk,
+            "pk": `organisation#${organisationId}`,
+            "sk": `apply#${jobId},email#${email}`
         },
-        UpdateExpression: "set firstName = :f, lastName = :l, email = :e, phone = :p, updatedAt = :u",
-        ExpressionAttributeValues: {
-            ":f": candidate.firstName,
-            ":l": candidate.lastName,
-            ":e": candidate.email,
-            ":p": candidate.phone,
-            ":u": candidate.updatedAt,
-        }
+        UpdateExpression: updateExpression,
+        ExpressionAttributeValues: expressionAttributeValues
     }
 
     try {
@@ -112,12 +104,13 @@ module.exports.update = async (event) => {
 
 // Function to Delete an item
 module.exports.delete = async (event) => {
-    const {pk} = event.pathParameters;
+    const {organisationId, jobId, email} = event.pathParameters;
 
     let params = {
         TableName: TABLE_NAME,
         Key: {
-            "pk": pk,
+            "pk": `organisation#${organisationId}`,
+            "sk": `apply#${jobId},email#${email}`
         }
     }
 
