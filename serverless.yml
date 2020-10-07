@@ -2,6 +2,10 @@ org: ibrahimmdogann
 service: my-first-api
 app: my-first-serverless-app
 
+custom:
+  tableName: Candidates
+  fileUploadBucket: my-file-upload-demo-with-serverless-s3
+
 provider:
   name: aws
   runtime: nodejs12.x
@@ -9,6 +13,17 @@ provider:
   stage: prod
   region: us-east-1
   timeout: 30
+  environment:
+    tableName: ${self:custom.tableName}
+    fileUploadBucket: ${self:custom.fileUploadBucket}
+    region: ${self:provider.region}
+
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "dynamodb:*"
+        - "s3:*"
+      Resource: "*"
 
 functions:
   createCandidate:
@@ -46,6 +61,18 @@ functions:
       - http:
           path: candidate/{organisationId}/{jobId}/{email}
           method: delete
+  resumeUpload:
+    handler: api/resumeUpload.handler
+    events:
+      - http:
+          path: candidate/{organisationId}/{jobId}/{email}/resume
+          method: POST
+  audioUpload:
+    handler: api/audioUpload.handler
+    events:
+      - http:
+          path: candidate/{organisationId}/{jobId}/{email}/audio
+          method: POST
 
 resources:
-  - ${file(resources/dynamo-table.yml)}
+  - ${file(resources.yml)}

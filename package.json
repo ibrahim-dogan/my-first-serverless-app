@@ -8,5 +8,10 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "file-type": "^15.0.1",
+    "mime-types": "^2.1.27",
+    "uuid": "^8.3.1"
+  }
 }

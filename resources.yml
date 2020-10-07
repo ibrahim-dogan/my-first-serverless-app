@@ -1,4 +1,9 @@
 Resources:
+  fileUploadBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: ${self:custom.fileUploadBucket}
+      AccessControl: PublicRead
   CandidatesDynamoTable:    # Logical Id of the resource
     Type: AWS::DynamoDB::Table
 

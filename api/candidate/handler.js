@@ -1,10 +1,9 @@
 "use strict";
 const AWS = require('aws-sdk'),
-    uuid = require('uuid'),
     docClient = new AWS.DynamoDB.DocumentClient();
 
 /** TABLE_NAME **/
-const TABLE_NAME = "Candidates";
+const TABLE_NAME = process.env.tableName;
 
 // Add a new candidate.
 module.exports.create = async (event) => {
@@ -75,7 +74,7 @@ module.exports.update = async (event) => {
     candidate.updatedAt = new Date().toString();
 
     var updatedKeys = Object.keys(candidate);
-    var updateExpression = "set "+ updatedKeys.map(x => `${x} = :${x}`).join(" ");
+    var updateExpression = "set "+ updatedKeys.map(x => `${x} = :${x}`).join(", ");
     var expressionAttributeValues = {};
     updatedKeys.forEach((key)=>{
         expressionAttributeValues[`:${key}`] = candidate[key]
