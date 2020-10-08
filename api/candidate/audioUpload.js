@@ -1,9 +1,10 @@
-const AWS = require('aws-sdk');
-const s3 = new AWS.S3();
-const mime = require('mime-types')
-const docClient = new AWS.DynamoDB.DocumentClient();
-
-const TABLE_NAME = process.env.tableName;
+"use strict";
+const AWS = require('aws-sdk'),
+    mime = require('mime-types'),
+    docClient = new AWS.DynamoDB.DocumentClient(),
+    s3 = new AWS.S3(),
+    Response = require('../common/ApiResponses'),
+    TABLE_NAME = process.env.tableName;
 
 exports.handler = async (event) => {
     const {organisationId, jobId, email} = event.pathParameters;
@@ -18,57 +19,40 @@ exports.handler = async (event) => {
     let contentType = event.headers['content-type'] || event.headers['Content-Type'];
     let extension = contentType ? mime.extension(contentType) : '';
 
+    if (extension !== 'wav') {
+        return Response.error({message: `Unsupported content type ${extension}`})
+    }
+
     let fullFileName = extension ? `${fileName}.${extension}` : fileName;
 
-    ///////
-
-    const candidate = {};
-    candidate.updatedAt = new Date().toString();
-    candidate.resumeFile = fullFileName;
-
-    var updatedKeys = Object.keys(candidate);
-    var updateExpression = "set "+ updatedKeys.map(x => `${x} = :${x}`).join(", ");
-    var expressionAttributeValues = {};
-    updatedKeys.forEach((key)=>{
-        expressionAttributeValues[`:${key}`] = candidate[key]
-    })
     let params = {
         TableName: TABLE_NAME,
         Key: {
             "pk": `organisation#${organisationId}`,
             "sk": `apply#${jobId},email#${email}`
         },
-        UpdateExpression: updateExpression,
-        ExpressionAttributeValues: expressionAttributeValues
+        UpdateExpression: "set audioFile = :a, updatedAt = :u",
+        ExpressionAttributeValues: {":a": fullFileName, ":u": new Date().toString()}
     }
 
-    ///////
-
-    // Upload the file to S3
+    // Upload the file to S3 & update candidate
     try {
-        let data = await s3.putObject({
-            Bucket: process.env.fileUploadBucket,
+        await s3.putObject({
+            Bucket: process.env.audioUploadBucket,
             Key: fullFileName,
             Body: fileContent,
             Metadata: {}
         }).promise();
 
-        console.log("Successfully uploaded file", fullFileName);
         await docClient.update(params).promise();
-        return {
-            body: JSON.stringify({
-                message: "Successfully uploaded",
-            })
-        };
+
+        return Response.success({
+            message: "Audio uploaded successfully."
+        })
 
     } catch (err) {
         console.log("Failed to upload file", fullFileName, err);
         throw err;
     }
 };
-
-
-
-/////
-
 

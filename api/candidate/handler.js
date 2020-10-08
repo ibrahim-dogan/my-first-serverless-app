@@ -4,6 +4,7 @@ const AWS = require('aws-sdk'),
 
 /** TABLE_NAME **/
 const TABLE_NAME = process.env.tableName;
+const Response = require('../common/ApiResponses')
 
 // Add a new candidate.
 module.exports.create = async (event) => {
@@ -27,13 +28,11 @@ module.exports.create = async (event) => {
 
         await docClient.put(params).promise();
 
-        return {
-            statusCode: 200,
-            body: JSON.stringify({
-                message: "Candidate created successfully.",
-                data: newCandidate
-            }),
-        };
+        return Response.success({
+            message: "Candidate created successfully.",
+            data: newCandidate
+        });
+
     } catch (error) {
         console.log(error);
         return error;
@@ -55,13 +54,17 @@ module.exports.read = async (event) => {
     try {
         let result = await docClient.get(params).promise();
 
-        return {
-            body: JSON.stringify({
-                statusCode: result.Item ? 200 : 404,
-                message: result.Item ? "Executed successfully." : "Object not found.",
+        if (result.Item){
+            return Response.success({
+                message: "Executed successfully.",
                 data: result.Item
-            })
+            });
         }
+
+        return Response.error({
+            message: "Object not found."
+        });
+
     } catch (error) {
         console.log(error);
     }
@@ -74,9 +77,9 @@ module.exports.update = async (event) => {
     candidate.updatedAt = new Date().toString();
 
     var updatedKeys = Object.keys(candidate);
-    var updateExpression = "set "+ updatedKeys.map(x => `${x} = :${x}`).join(", ");
+    var updateExpression = "set " + updatedKeys.map(x => `${x} = :${x}`).join(", ");
     var expressionAttributeValues = {};
-    updatedKeys.forEach((key)=>{
+    updatedKeys.forEach((key) => {
         expressionAttributeValues[`:${key}`] = candidate[key]
     })
     let params = {
@@ -91,11 +94,9 @@ module.exports.update = async (event) => {
 
     try {
         await docClient.update(params).promise();
-        return {
-            body: JSON.stringify({
-                message: "Updated successfully.",
-            })
-        }
+        return Response.success({
+            message: "Updated successfully."
+        });
     } catch (error) {
         console.log(error);
     }
@@ -115,10 +116,8 @@ module.exports.delete = async (event) => {
 
     await docClient.delete(params).promise();
 
-    return {
-        body: JSON.stringify({
-            message: "Deleted successfully.",
-        })
-    }
+    return Response.success({
+        message: "Deleted successfully."
+    });
 
 }

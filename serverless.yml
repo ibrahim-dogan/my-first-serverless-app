@@ -3,19 +3,21 @@ service: my-first-api
 app: my-first-serverless-app
 
 custom:
-  tableName: Candidates
-  fileUploadBucket: my-file-upload-demo-with-serverless-s3
+  tableName: candidates-${opt:stage, self:provider.stage}
+  audioUploadBucket: my-audio-upload-demo-with-serverless-s3-${opt:stage, self:provider.stage}
+  resumeUploadBucket: my-resume-upload-demo-with-serverless-s3-${opt:stage, self:provider.stage}
 
 provider:
   name: aws
   runtime: nodejs12.x
   profile: default
-  stage: prod
+  stage: dev
   region: us-east-1
   timeout: 30
   environment:
     tableName: ${self:custom.tableName}
-    fileUploadBucket: ${self:custom.fileUploadBucket}
+    audioUploadBucket: ${self:custom.audioUploadBucket}
+    resumeUploadBucket: ${self:custom.resumeUploadBucket}
     region: ${self:provider.region}
 
   iamRoleStatements:
@@ -27,7 +29,7 @@ provider:
 
 functions:
   createCandidate:
-    handler: api/candidate/handler.create
+    handler: api/candidate/create.handler
     memorySize: 128
     description: Add a new candidate.
     events:
@@ -36,7 +38,7 @@ functions:
           method: post
 
   readCandidate:
-    handler: api/candidate/handler.read
+    handler: api/candidate/read.handler
     memorySize: 128
     description: Gathers a candidates information.
     events:
@@ -45,7 +47,7 @@ functions:
           method: get
 
   updateCandidate:
-    handler: api/candidate/handler.update
+    handler: api/candidate/update.handler
     memorySize: 128
     description: Updates candidates information.
     events:
@@ -54,7 +56,7 @@ functions:
           method: patch
 
   deleteCandidate:
-    handler: api/candidate/handler.delete
+    handler: api/candidate/delete.handler
     memorySize: 128
     description: Deletes a candidate.
     events:
@@ -62,13 +64,17 @@ functions:
           path: candidate/{organisationId}/{jobId}/{email}
           method: delete
   resumeUpload:
-    handler: api/resumeUpload.handler
+    handler: api/candidate/resumeUpload.handler
+    memorySize: 128
+    description: Uploades and matches resume with candidate.
     events:
       - http:
           path: candidate/{organisationId}/{jobId}/{email}/resume
           method: POST
   audioUpload:
-    handler: api/audioUpload.handler
+    handler: api/candidate/audioUpload.handler
+    memorySize: 128
+    description: Uploades and matches audio with candidate.
     events:
       - http:
           path: candidate/{organisationId}/{jobId}/{email}/audio

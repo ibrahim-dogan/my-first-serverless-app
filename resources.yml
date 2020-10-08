@@ -1,9 +1,14 @@
 Resources:
-  fileUploadBucket:
+  audioUploadBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: ${self:custom.fileUploadBucket}
-      AccessControl: PublicRead
+      BucketName: ${self:custom.audioUploadBucket}
+#      AccessControl: PublicRead
+  resumeUploadBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: ${self:custom.resumeUploadBucket}
+  #      AccessControl: PublicRead
   CandidatesDynamoTable:    # Logical Id of the resource
     Type: AWS::DynamoDB::Table
 
@@ -22,7 +27,7 @@ Resources:
           - AttributeName: "sk"
             KeyType: "RANGE"
 
-      TableName: "Candidates"
+      TableName: ${self:custom.tableName}
       ProvisionedThroughput: # Optional, can be skipped
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
